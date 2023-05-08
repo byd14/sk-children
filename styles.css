@@ -1,0 +1,40 @@
+body {
+    background-color: rgb(139, 99, 99);
+}
+
+#play-space {
+    display: block;
+    width: 1100px;
+    height: 850px;
+    margin: auto;
+    margin-top: 4em;
+    position: relative;
+    
+}
+
+.bg-image {
+    width: 100%;
+    height: auto;
+}
+
+#dice-button {
+    width: 150px;
+    position: absolute;
+    top: 55%;
+    left: 42%;
+}
+
+.chara {
+    transition: left 0.5s, top 0.5s;
+    background-color: blue;
+    width: 30px;
+    height: 30px;
+    position: absolute;
+    left: 160px;
+    top: 100px;
+    z-index: 10;
+}
+.chara.you {
+    background-color: greenyellow;
+    z-index: 11;
+}
