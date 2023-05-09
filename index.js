@@ -73,6 +73,7 @@ const auth = getAuth(app);
 
 let playerId;
 let playerRef;
+let playerBalance = 1000;
 let players = {};
 let playerElements = {};
 
@@ -132,7 +133,7 @@ onAuthStateChanged(auth, (user) => {
         playerRef = ref(database, '/players/' + playerId);
         set(playerRef, {
             id: playerId,
-            balance: 1000,
+            balance: playerBalance,
             cell: 0
         });
 
@@ -154,7 +155,8 @@ window.diceRoll = function diceRoll(){
     console.log(roll);
     set(playerRef, {
         id: playerId,
-        cell: (roll + players[playerId].cell) % 16
+        cell: (roll + players[playerId].cell) % 16,
+        balance: playerBalance
     });
 }
 
