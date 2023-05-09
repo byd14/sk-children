@@ -21,7 +21,7 @@ var cell_size = 120;
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-auth.js"
-import { getDatabase, ref, set, onValue, onDisconnect, onChildAdded } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js"
+import { getDatabase, ref, set, onValue, onDisconnect, onChildAdded, onChildRemoved } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js"
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -56,7 +56,7 @@ function game_init() {
         players = snapshot.val() || {};
         Object.keys(players).forEach((key) => {
             const characterState = players[key];
-            let el = playerElements[key]
+            let el = playerElements[key];
             el.style.left = 160 + cell_2_coords[players[key].cell].x * cell_size;
             el.style.top = 100 + cell_2_coords[players[key].cell].y * cell_size;
         });
@@ -73,6 +73,11 @@ function game_init() {
 
         playerElements[added_player.id] = character_element;
         play_space.appendChild(character_element);
+    });
+    onChildRemoved(all_players_ref, (snapshot) => {
+        const removed_key = snapshot.val().id;
+        play_space.removeChild(playerElements[removed_key]);
+        delete playerElements[removed_key];
     });
 
 }
@@ -113,9 +118,9 @@ onAuthStateChanged(auth, (user) => {
 
 window.diceRoll = function diceRoll(){
     var roll = Math.floor(Math.random() * 6 + 1)
-    console.log(roll);
+    console.log(Object.keys(players).length);
     set(playerRef, {
         id: playerId,
         cell: (roll + players[playerId].cell) % 16
-    })
+    });
 }
