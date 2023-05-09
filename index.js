@@ -1,22 +1,52 @@
-var cell_2_coords = {
-    0: {x: 0,y: 0},
-    1: {x:1 ,y:0 },
-    2: {x:2 ,y:0 },
-    3: {x:3 ,y:0 },
-    4: {x:4 ,y:0 },
-    5: {x:4 ,y:1 },
-    6: {x:4 ,y:2 },
-    7: {x:4 ,y:3 },
-    8: {x:4 ,y:4 },
-    9: {x: 3,y: 4},
-    10: {x: 2,y: 4},
-    11: {x: 1,y: 4},
-    12: {x: 0,y: 4},
-    13: {x: 0,y: 3},
-    14: {x: 0,y: 2},
-    15: {x: 0,y: 1},
+class grid_cell {
+    constructor(coords){
+        this.coords = coords;
+        this.start_price = 100;
+        this.price_step = 10;
+        this.price_ceiling = 200;
+        this.pliability = 0.5;
+    };
+}
+
+var grid_cells = {
+    0: new grid_cell({x: 0,y: 0}),
+    1: new grid_cell({x:1 ,y:0 }),
+    2: new grid_cell({x:2 ,y:0 }),
+    3: new grid_cell({x:3 ,y:0 }),
+    4: new grid_cell({x:4 ,y:0 }),
+    5: new grid_cell({x:4 ,y:1 }),
+    6: new grid_cell({x:4 ,y:2 }),
+    7: new grid_cell({x:4 ,y:3 }),
+    8: new grid_cell({x:4 ,y:4 }),
+    9: new grid_cell({x: 3,y: 4}),
+    10: new grid_cell({x: 2,y: 4}),
+    11: new grid_cell({x: 1,y: 4}),
+    12: new grid_cell({x: 0,y: 4}),
+    13: new grid_cell({x: 0,y: 3}),
+    14: new grid_cell({x: 0,y: 2}),
+    15: new grid_cell({x: 0,y: 1})
 };
+
 var cell_size = 120;
+
+function cell_action(cell_num) {
+    switch (cell_num) {
+        default:
+            console.log('hey)');
+            const trade_element = document.createElement('div');
+            trade_element.classList.add('trade_popup');
+            trade_element.id = 'closed_trade';
+            trade_element.innerHTML = ('\
+            <button onclick="tradeAction(true)">bet</button>\
+            <button onclick="tradeAction(false)">leave</button>\
+            <p>current cost</p>\
+            <p id = cost>0</p>\
+            ');
+            play_space.appendChild(trade_element);
+            document.getElementById('cost').innerText = grid_cells[players[playerId].cell].start_price;
+            break;
+    }   
+}
 
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
@@ -57,8 +87,9 @@ function game_init() {
         Object.keys(players).forEach((key) => {
             const characterState = players[key];
             let el = playerElements[key];
-            el.style.left = 160 + cell_2_coords[players[key].cell].x * cell_size;
-            el.style.top = 100 + cell_2_coords[players[key].cell].y * cell_size;
+            el.style.left = 160 + grid_cells[players[key].cell].coords.x * cell_size;
+            el.style.top = 100 + grid_cells[players[key].cell].coords.y * cell_size;
+
         });
 
     });
@@ -101,6 +132,7 @@ onAuthStateChanged(auth, (user) => {
         playerRef = ref(database, '/players/' + playerId);
         set(playerRef, {
             id: playerId,
+            balance: 1000,
             cell: 0
         });
 
@@ -118,9 +150,28 @@ onAuthStateChanged(auth, (user) => {
 
 window.diceRoll = function diceRoll(){
     var roll = Math.floor(Math.random() * 6 + 1)
-    console.log(Object.keys(players).length);
+    cell_action((roll + players[playerId].cell) % 16);
+    console.log(roll);
     set(playerRef, {
         id: playerId,
         cell: (roll + players[playerId].cell) % 16
     });
+}
+
+window.tradeAction = function tradeAction(code) {
+    if (code) {
+        const cost_value = document.getElementById('cost');
+        const current_cell = grid_cells[players[playerId].cell]
+        if (Number(cost_value.innerText) < current_cell.price_ceiling) {        
+            if (Math.random() > current_cell.pliability) {
+                    cost_value.innerText = Number(cost_value.innerText) + current_cell.price_step;
+                } else {
+                    play_space.removeChild(document.getElementById('closed_trade'));
+                }
+        } else {
+            play_space.removeChild(document.getElementById('closed_trade'));
+        }
+    } else {
+        play_space.removeChild(document.getElementById('closed_trade'));
+    }
 }
