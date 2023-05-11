@@ -4,10 +4,9 @@ function cell_action(cell_num) {
     if (cells[cell_num].owner == 'npc') {
         switch (cell_num) {
             default:
-                console.log('hey)');
                 const trade_element = document.createElement('div');
-                trade_element.classList.add('trade_popup');
-                trade_element.id = 'closed_trade';
+                trade_element.classList.add('trade-popup');
+                trade_element.id = 'closed-trade';
                 trade_element.innerHTML = ('\
                 <button onclick="tradeAction(true)">bet</button>\
                 <button onclick="tradeAction(false)">leave</button>\
@@ -23,9 +22,25 @@ function cell_action(cell_num) {
             console.log('rent');
             const updates = {};
             updates['/players/' + playerId + '/balance/'] = players[playerId].balance - cells[cell_num].rent;
+            updates['/players/' + cells[cell_num].owner + '/balance/'] = players[cells[cell_num].owner].balance + cells[cell_num].rent;
             update(ref(database), updates);
         }
     }
+}
+
+function openAuction(initiator) {
+    const auc_element = document.createElement('span');
+    auc_element.id = 'auction';
+    Object.keys(players).forEach((key) => {
+        const candidate_element = document.createElement('div');
+        const candidate_name = document.createElement('p');
+        candidate_name.innerText = (key == initiator ? "npc" : key);
+        candidate_element.classList.add('candidate-card');
+        candidate_element.innerHTML = ('<button onclick="aucAction(' + initiator + ')">+</button> ');
+        candidate_element.appendChild(candidate_name);
+        auc_element.appendChild(candidate_element);
+    });
+    play_space.appendChild(auc_element);
 }
 
 // Import the functions you need from the SDKs you need
@@ -58,16 +73,25 @@ let playerElements = {};
 
 let cellsRef;
 let cells;
+let aucRef;
 
 const play_space = document.getElementById('play-space');
 
 function game_init() {
-    const all_players_ref = ref(database, '/players')
+    const all_players_ref = ref(database, '/players');
+    aucRef = ref(database, '/auction/');
+
 
     onValue(cellsRef, (snapshot) => {
 
         cells = snapshot.val();
 
+    });
+
+    onValue(aucRef, (snapshot) => {
+        if (snapshot.val() && snapshot.val().ongoing == true) {
+            openAuction(snapshot.val().initiator);
+        }
     });
     
     onValue(all_players_ref, (snapshot) => {
@@ -156,19 +180,32 @@ window.tradeAction = function tradeAction(code) {
             if (Math.random() > current_cell.pliability) {
                 cost_value.innerText = Number(cost_value.innerText) + current_cell.step;
             } else {
-                play_space.removeChild(document.getElementById('closed_trade'));
+                play_space.removeChild(document.getElementById('closed-trade'));
                 const updates = {};
                 updates['/cells/' + players[playerId].cell + '/owner/'] = playerId;
+                updates['/players/' + playerId + '/balance/'] = players[playerId].balance - Number(cost_value.innerText);
                 update(ref(database), updates);
                 }
         } else {
-            play_space.removeChild(document.getElementById('closed_trade'));
+            play_space.removeChild(document.getElementById('closed-trade'));
             const updates = {};
             updates['/cells/' + players[playerId].cell + '/owner/'] = playerId;
+            updates['/players/' + playerId + '/balance/'] = players[playerId].balance - Number(cost_value.innerText);
             update(ref(database), updates);
 
         }
     } else {
-        play_space.removeChild(document.getElementById('closed_trade'));
+        play_space.removeChild(document.getElementById('closed-trade'));
     }
+}
+
+window.startAuction = function startAuction() {
+    set(aucRef, {
+        ongoing: true,
+        initiator: playerId
+    });
+}
+
+window.aucAction = function aucAction(initiator) {
+
 }
